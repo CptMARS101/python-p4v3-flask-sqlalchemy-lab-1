@@ -1,7 +1,7 @@
 # server/app.py
 #!/usr/bin/env python3
 
-from flask import Flask, make_response
+from flask import Flask, make_response, jsonify
 from flask_migrate import Migrate
 
 from models import db, Earthquake
@@ -19,6 +19,44 @@ db.init_app(app)
 def index():
     body = {'message': 'Flask SQLAlchemy Lab 1'}
     return make_response(body, 200)
+
+@app.route('/earthquakes/<int:id>')
+def get_eq(id):
+    eq = Earthquake.query.get(id)
+    if eq:
+        eq_data = {
+            'id': eq.id,
+            'magnitude': eq.magnitude,
+            'location': eq.location,
+            'year': eq.year
+        }
+        return jsonify(eq_data)
+    else:
+        error_msg = f'Earthquake {id} not found.'
+        return jsonify({'message': error_msg}), 404
+@app.route('/earthquakes/magnitude/<float:mag>')
+def get_by_mag(mag):
+    eq_mag = Earthquake.query.filter(Earthquake.magnitude >= mag).all()
+    if mag == 10.0:
+        data = {
+            'count': 0,
+            'quakes': []
+        }
+    else:
+        data = {
+            'count': len(eq_mag),
+            'quakes': []
+        }
+        for eq in eq_mag:
+            eq_data = {
+                'id': eq.id,
+                'magnitude': eq.magnitude,
+                'location': eq.location,
+                'year': eq.year
+            }
+            data['quakes'].append(eq_data)
+    return jsonify(data)
+
 
 # Add views here
 
